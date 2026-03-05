@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>บันทึกสต็อก</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #e8c96a;
+    --gold-dim: #7a6130;
+    --night: #0a0e1a;
+    --night2: #111827;
+    --night3: #1a2235;
+    --night4: #232e42;
+    --night5: #2d3a52;
+    --text: #e8eaf0;
+    --text-dim: #8896b0;
+    --blue: #3b82f6;
+    --green: #10b981;
+    --red: #ef4444;
+    --border: rgba(201,168,76,0.2);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Sarabun', sans-serif;
+    background: var(--night);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 120px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(135deg, var(--night2) 0%, #0f1829 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+  .header-title {
+    font-family: 'Prompt', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gold-light);
+    letter-spacing: 0.5px;
+  }
+  .header-sub {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  /* ── SCREEN SYSTEM ── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ── HERO SELECT ── */
+  .hero {
+    padding: 32px 20px 24px;
+    text-align: center;
+  }
+  .hero-label {
+    font-size: 13px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 24px;
+  }
+
+  .branch-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .branch-card {
+    background: var(--night3);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .branch-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(201,168,76,0.08), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .branch-card:active { transform: scale(0.97); }
+  .branch-card.selected {
+    border-color: var(--gold);
+    background: var(--night4);
+  }
+  .branch-card.selected::before { opacity: 1; }
+  .branch-icon { font-size: 32px; margin-bottom: 8px; }
+  .branch-name {
+    font-family: 'Prompt', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .branch-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+  /* ── MODE SELECT ── */
+  .mode-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .mode-card {
+    background: var(--night3);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .mode-card:active { transform: scale(0.97); }
+  .mode-card.mode-stock { border-color: rgba(59,130,246,0.4); }
+  .mode-card.mode-restock { border-color: rgba(16,185,129,0.4); }
+  .mode-card.mode-stock:hover, .mode-card.mode-stock.selected {
+    background: rgba(59,130,246,0.12);
+    border-color: var(--blue);
+  }
+  .mode-card.mode-restock:hover, .mode-card.mode-restock.selected {
+    background: rgba(16,185,129,0.12);
+    border-color: var(--green);
+  }
+  .mode-icon { font-size: 28px; margin-bottom: 8px; }
+  .mode-name {
+    font-family: 'Prompt', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .mode-desc { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 20px 20px 8px;
+  }
+
+  /* ── META ROW ── */
+  .meta-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 0 20px;
+    margin-bottom: 8px;
+  }
+  .meta-field {
+    background: var(--night3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .meta-field label {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .meta-field select,
+  .meta-field input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    outline: none;
+  }
+  .meta-field select option { background: var(--night3); }
+
+  /* ── PRODUCT GROUP ── */
+  .product-group {
+    margin: 0 20px 12px;
+    background: var(--night3);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .group-header {
+    padding: 10px 14px;
+    background: linear-gradient(90deg, rgba(201,168,76,0.12), transparent);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .group-header-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+    flex-shrink: 0;
+  }
+  .group-title {
+    font-family: 'Prompt', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gold-light);
+  }
+  .group-price {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+
+  /* ── PRODUCT ROW ── */
+  .product-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    gap: 10px;
+  }
+  .product-row:last-child { border-bottom: none; }
+  .product-name {
+    flex: 1;
+    font-size: 14px;
+    color: var(--text);
+    min-width: 0;
+  }
+  .qty-control {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--night4);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--night5);
+  }
+  .qty-btn {
+    width: 32px; height: 32px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .qty-btn:active { background: var(--night5); color: var(--text); }
+  .qty-input {
+    width: 44px;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+    outline: none;
+    padding: 0;
+  }
+  .qty-input.has-value { color: var(--gold-light); }
+
+  /* ── RESTOCK ── */
+  .restock-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    gap: 10px;
+  }
+  .restock-row:last-child { border-bottom: none; }
+  .restock-name { flex: 1; font-size: 14px; }
+  .restock-input {
+    width: 60px;
+    background: var(--night4);
+    border: 1px solid var(--night5);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Sarabun', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+    padding: 6px 4px;
+    outline: none;
+  }
+  .restock-input:focus { border-color: var(--green); }
+  .restock-input.has-value { color: var(--green); border-color: rgba(16,185,129,0.4); }
+
+  /* ── BOTTOM BAR ── */
+  .bottom-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    padding: 12px 20px;
+    background: linear-gradient(to top, var(--night) 60%, transparent);
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+  .submit-btn {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 14px;
+    font-family: 'Prompt', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .submit-btn.stock-btn {
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    color: white;
+  }
+  .submit-btn.restock-btn {
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: white;
+  }
+  .submit-btn:active { transform: scale(0.98); opacity: 0.9; }
+
+  /* ── RESULT SCREEN ── */
+  .result-screen {
+    padding: 20px;
+  }
+  .result-header {
+    background: var(--night3);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .result-icon { font-size: 32px; }
+  .result-title {
+    font-family: 'Prompt', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gold-light);
+  }
+  .result-sub { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+
+  .result-text-box {
+    background: var(--night2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .result-text {
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+  .copy-btn {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: var(--gold);
+    color: var(--night);
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-family: 'Sarabun', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .copy-btn:active { transform: scale(0.96); }
+  .copy-btn.copied { background: var(--green); color: white; }
+
+  .action-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 80px;
+  }
+  .action-btn {
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    font-family: 'Prompt', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .action-btn:active { transform: scale(0.97); }
+  .btn-back {
+    background: var(--night3);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-new {
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    color: var(--night);
+  }
+
+  /* ── MISC ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 20px;
+  }
+  .empty-note {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 12px;
+    padding: 12px;
+  }
+  .step-indicator {
+    display: flex;
+    gap: 6px;
+    padding: 12px 20px 0;
+  }
+  .step-dot {
+    height: 3px;
+    flex: 1;
+    border-radius: 2px;
+    background: var(--night5);
+    transition: background 0.3s;
+  }
+  .step-dot.active { background: var(--gold); }
+  .step-dot.done { background: var(--gold-dim); }
+
+  .back-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-dim);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 12px 20px 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .back-link:active { color: var(--text); }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     SCREEN 1: SELECT BRANCH + MODE
+════════════════════════════════════════ -->
+<div id="screen-select" class="screen active">
+  <div class="header">
+    <div class="header-title">📦 บันทึกสต็อก</div>
+    <div class="header-sub">Otteri Laundry</div>
+  </div>
+
+  <div class="step-indicator">
+    <div class="step-dot active" id="step1"></div>
+    <div class="step-dot" id="step2"></div>
+    <div class="step-dot" id="step3"></div>
+  </div>
+
+  <div class="hero">
+    <div class="hero-label">เลือกสาขา</div>
+    <div class="branch-grid">
+      <div class="branch-card" id="card-thanee" onclick="selectBranch('ธานี', this)">
+        <div class="branch-icon">🏛️</div>
+        <div class="branch-name">ธานี</div>
+        <div class="branch-sub">สาขาหลัก</div>
+      </div>
+      <div class="branch-card" id="card-yak" onclick="selectBranch('จิระ', this)">
+        <div class="branch-icon">👹</div>
+        <div class="branch-name">จิระ</div>
+        <div class="branch-sub">สาขาจิระ</div>
+      </div>
+    </div>
+
+    <div class="hero-label">เลือกประเภท</div>
+    <div class="mode-grid">
+      <div class="mode-card mode-stock" id="card-stock" onclick="selectMode('stock', this)">
+        <div class="mode-icon">📊</div>
+        <div class="mode-name" style="color:#60a5fa">รายงานสต็อก</div>
+        <div class="mode-desc">บันทึกจำนวนสินค้าคงเหลือ</div>
+      </div>
+      <div class="mode-card mode-restock" id="card-restock" onclick="selectMode('restock', this)">
+        <div class="mode-icon">🔄</div>
+        <div class="mode-name" style="color:#34d399">เติมสต็อก</div>
+        <div class="mode-desc">บันทึกสินค้าที่เพิ่งเติม</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-bar">
+    <button class="submit-btn stock-btn" onclick="goToForm()" id="btn-next">
+      ถัดไป →
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SCREEN 2: STOCK FORM — ธานี
+════════════════════════════════════════ -->
+<div id="screen-stock-thanee" class="screen">
+  <div class="header">
+    <div class="header-title">📊 รายงานสต็อก — สาขาธานี</div>
+    <div class="header-sub">กรอกจำนวนสินค้าคงเหลือ</div>
+  </div>
+  <div class="step-indicator">
+    <div class="step-dot done"></div>
+    <div class="step-dot active"></div>
+    <div class="step-dot"></div>
+  </div>
+  <div class="back-link" onclick="goBack()">← กลับ</div>
+
+  <!-- META -->
+  <div class="section-label">ข้อมูลทั่วไป</div>
+  <div class="meta-row">
+    <div class="meta-field">
+      <label>กะ</label>
+      <select id="thanee-shift">
+        <option>เช้า</option>
+        <option>บ่าย</option>
+        <option>เย็น</option>
+      </select>
+    </div>
+    <div class="meta-field">
+      <label>วันที่</label>
+      <input type="text" id="thanee-date" placeholder="1/3/69">
+    </div>
+  </div>
+
+  <div id="thanee-stock-groups"></div>
+
+  <div class="bottom-bar">
+    <button class="submit-btn stock-btn" onclick="submitStock('ธานี')">
+      ✅ สร้างรายงาน
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SCREEN 3: STOCK FORM — จิระ
+════════════════════════════════════════ -->
+<div id="screen-stock-yak" class="screen">
+  <div class="header">
+    <div class="header-title">📊 รายงานสต็อก — สาขาจิระ</div>
+    <div class="header-sub">กรอกจำนวนสินค้าคงเหลือ</div>
+  </div>
+  <div class="step-indicator">
+    <div class="step-dot done"></div>
+    <div class="step-dot active"></div>
+    <div class="step-dot"></div>
+  </div>
+  <div class="back-link" onclick="goBack()">← กลับ</div>
+
+  <div class="section-label">ข้อมูลทั่วไป</div>
+  <div class="meta-row">
+    <div class="meta-field">
+      <label>กะ</label>
+      <select id="yak-shift">
+        <option>เช้า</option>
+        <option>บ่าย</option>
+        <option>เย็น</option>
+      </select>
+    </div>
+    <div class="meta-field">
+      <label>วันที่</label>
+      <input type="text" id="yak-date" placeholder="1/3/69">
+    </div>
+  </div>
+
+  <div id="yak-stock-groups"></div>
+
+  <div class="bottom-bar">
+    <button class="submit-btn stock-btn" onclick="submitStock('จิระ')">
+      ✅ สร้างรายงาน
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SCREEN 4: RESTOCK FORM
+════════════════════════════════════════ -->
+<div id="screen-restock" class="screen">
+  <div class="header">
+    <div class="header-title" id="restock-header-title">🔄 เติมสต็อก</div>
+    <div class="header-sub">กรอกจำนวนที่เติม (เฉพาะที่เติมเท่านั้น)</div>
+  </div>
+  <div class="step-indicator">
+    <div class="step-dot done"></div>
+    <div class="step-dot active"></div>
+    <div class="step-dot"></div>
+  </div>
+  <div class="back-link" onclick="goBack()">← กลับ</div>
+
+  <div class="section-label">ข้อมูลทั่วไป</div>
+  <div class="meta-row" style="grid-template-columns: 1fr;">
+    <div class="meta-field">
+      <label>วันที่</label>
+      <input type="text" id="restock-date" placeholder="1/3/69">
+    </div>
+  </div>
+
+  <div id="restock-groups"></div>
+
+  <div class="bottom-bar">
+    <button class="submit-btn restock-btn" onclick="submitRestock()">
+      ✅ สร้างรายงานเติมสต็อก
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SCREEN 5: RESULT
+════════════════════════════════════════ -->
+<div id="screen-result" class="screen">
+  <div class="header">
+    <div class="header-title">✅ สร้างรายงานสำเร็จ</div>
+    <div class="header-sub">copy ข้อความแล้ววางใน LINE</div>
+  </div>
+
+  <div class="result-screen">
+    <div class="result-header">
+      <div class="result-icon" id="result-icon">📊</div>
+      <div>
+        <div class="result-title" id="result-title">รายงานสต็อก</div>
+        <div class="result-sub" id="result-sub">สาขาธานี • กะเช้า</div>
+      </div>
+    </div>
+
+    <div class="result-text-box">
+      <button class="copy-btn" id="copy-btn" onclick="copyResult()">📋 Copy</button>
+      <div class="result-text" id="result-text"></div>
+    </div>
+
+    <div class="action-row">
+      <button class="action-btn btn-back" onclick="goBack()">← แก้ไข</button>
+      <button class="action-btn btn-new" onclick="goHome()">🏠 หน้าแรก</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+// DATA — สินค้าแยกสาขา
+// ══════════════════════════════════════
+
+const PRODUCTS = {
+  ธานี: [
+    { group: "ซักผ้า 52 บาท", price: 52, items: [
+      "ซันไรส์คิส","แฮปปี้ซันชายน์","เลิฟลี่","มิลค์กี้ทัช",
+      "พีโอนี","เลิฟทัช","ฟอเอ","เขียว","สีน้ำเงิน"
+    ]},
+    { group: "ซักผ้า 15 บาท", price: 15, items: [
+      "ซันไรส์คิส","มิลค์กี้ทัช","เลิฟลี่บลูม","มอนิ่ง",
+      "แฮปปี้ส้ม","พีโอนี","เลิฟทัช","ฟอเอ"
+    ]},
+    { group: "ซักผ้า Downy 20 บาท", price: 20, items: ["ชมพู"] },
+    { group: "ซักผ้า Downy 60 บาท", price: 60, items: ["ชมพู"] },
+    { group: "ซักผ้า Fineline 140 บาท", price: 140, items: ["ม่วง","ดำ","เหลือง","แดง","ชมพู"] },
+    { group: "ซักผ้าเด็ก D-nee 59 บาท", price: 59, items: ["ฟ้า","ม่วง","ชมพู","ฟ้าพระจันทร์","สวีทดรีม"] },
+    { group: "ซักผ้าเด็ก D-nee 120 บาท", price: 120, items: ["ฟ้า","ชมพู","ม่วง"] },
+    { group: "ซักผ้าอองฟองต์ 95 บาท", price: 95, items: ["ม่วง","เหลือง"] },
+    { group: "ปรับผ้านุ่ม 19 บาท", price: 19, items: [
+      "ซันไรส์คิส","มิลค์กี้ทัช","มอร์นิ่งฮักฟ้า","บลูมมิ่งทัช",
+      "แฮปปี้ส้ม","เลิฟลี่บลูม","ไทม์เลส","เบอร์รี่โทสต์","เฟิร์สสโนว์","เลิฟทัช","เรนโบว์"
+    ]},
+    { group: "ปรับผ้านุ่ม 58 บาท", price: 58, items: [
+      "สวีทคิส","มอนิ่งเฟรช","ขาวมิลค์กี้","ดรีมมี่ฮักม่วง","มอร์นิ่งฮักฟ้า",
+      "แฮปปี้ส้ม","บลูมมิ่งทัช","ซันคิสบลูมมิ่ง","พีโอนี","แอร์รี่สกาย",
+      "เบอร์รี่โทสต์","เลิฟลี่","เลิฟทัช","เฟิร์สสโนว์","เรนโบว์"
+    ]},
+    { group: "ปรับผ้านุ่ม 125 บาท", price: 125, items: ["ฟอเอเวอร์","เลิฟทัช","มาการอง","มิลค์กี้","สปริงแมก"] },
+    { group: "ปรับผ้านุ่ม Downy 20 บาท", price: 20, items: [
+      "แพชชั่นแดง","ฟองสบู่ดอกไม้","ชมพูดอกไม้ผลิ","กลิ่นดอกคอตตอน",
+      "ม่วงมิสทีค","ฟ้าขวดน้ำหอม","ฟ้ายามเช้า"
+    ]},
+    { group: "ปรับผ้านุ่ม Downy 60 บาท", price: 60, items: ["แพชชั่นแดง","ม่วงมิสทีค","ชมพูขวดน้ำหอม","ฟ้าดอกไม้สดชื่น"] },
+    { group: "ปรับผ้านุ่ม Downy 130 บาท", price: 130, items: ["แดง","ม่วง"] },
+    { group: "ปรับผ้านุ่ม D-nee 35 บาท", price: 35, items: ["ม่วง","ฟ้า","ชมพู","ชมพูแฮปปี้","ม่วงสวีทดรีม"] },
+    { group: "ปรับผ้านุ่ม D-nee 55 บาท", price: 55, items: ["ชมพู","ขาว"] },
+    { group: "ปรับผ้านุ่ม D-nee 125 บาท", price: 125, items: ["ชมพู","ขาว"] },
+    { group: "น้ำยาแพ็ค 40 บาท", price: 40, items: ["ขาว","ชมพู"] },
+    { group: "น้ำยาล้างห้องน้ำ 40 บาท", price: 40, items: ["ม่วง","ชมพู","สีทอง"] },
+    { group: "น้ำยาล้างห้องน้ำแพ็ค 120 บาท", price: 120, items: ["ชมพูอ่อน"] },
+    { group: "น้ำยาถูพื้น 25 บาท", price: 25, items: ["มาจิคลีน"] },
+    { group: "น้ำยาถูพื้น 35 บาท", price: 35, items: ["ชมพูอ่อน","ม่วง","แดง"] },
+    { group: "น้ำยาถูพื้น 170 บาท", price: 170, items: ["แดง","ชมพู","ฟ้า"] },
+    { group: "ไฮยีนซักผ้าขาว 55 บาท", price: 55, items: ["ฟ้า","ชมพู"] },
+    { group: "ปากกาขจัดคราบ 99 บาท", price: 99, items: ["7ชิ้น"] },
+    { group: "ถุงสีรุ้ง 70 บาท", price: 70, items: ["สีรุ้ง"] },
+    { group: "น้ำยาเล็ก", price: 0, items: [
+      "ซักมิลค์กี้ทัช","ซักฟอเอ","ซักเลิฟทัช","ซักไฟน์ไลน์ดำ",
+      "ซักซันไรส์คิส","ซักเขียว","ปรับซันไรส์","ปรับมอร์นิ่งเฟรช","ปรับเรนโบว์","ปรับพีโอนี"
+    ]},
+  ],
+
+  จิระ: [
+    { group: "ซักผ้า 52 บาท", price: 52, items: [
+      "ฟอร์เอเวอร์","แฮปปี้ส้ม","มิลค์กี้ทัช","มอร์นิ่งเฟรช","พีโอนี","เลิฟลี่"
+    ]},
+    { group: "ซักผ้า 115 บาท (ใหญ่)", price: 115, items: ["ฟอร์เอเวอร์","เลิฟลี่","มอร์นิ่งเฟรช"] },
+    { group: "ซักผ้า Fineline 140 บาท", price: 140, items: ["ดำ"] },
+    { group: "ซักผ้า Downy 60 บาท", price: 60, items: ["ชมพู"] },
+    { group: "ซักผ้าเด็ก D-nee 59 บาท", price: 59, items: ["ม่วง","ฟ้า","สวีทดรีม","ชมพู"] },
+    { group: "ปรับผ้านุ่ม 58 บาท", price: 58, items: [
+      "พีโอนี","มิลค์กี้","มอร์นิ่งฮัก","ส้มแฮปปี้","สวีทคิส",
+      "ซันไรส์คิส","เลิฟลี่","เบอร์รี่โทสต์","ซันคิส","แอร์รี่","เฟิร์สสโนว์","เรนโบว์บลูม"
+    ]},
+    { group: "ปรับผ้านุ่ม 125 บาท (ใหญ่)", price: 125, items: ["ซันไรส์คิสใหญ่","มาการอง"] },
+    { group: "ปรับผ้านุ่ม Downy 60 บาท", price: 60, items: ["ฟ้า","ม่วง"] },
+    { group: "ปรับผ้านุ่ม D-nee 35 บาท", price: 35, items: ["ฟ้า","ม่วง","ชมพู","สวีทดรีม"] },
+    { group: "น้ำยาแพ็ค 40 บาท", price: 40, items: ["ขาว","ชมพู"] },
+    { group: "ไฮเตอร์ซักผ้าขาว 55 บาท", price: 55, items: ["ชมพู","ฟ้า"] },
+    { group: "ถุงไฮเดนใส 15 บาท", price: 15, items: ["ถุงใส"] },
+    { group: "ถุงสีรุ้ง 70 บาท (ใหญ่)", price: 70, items: ["สีรุ้ง"] },
+    { group: "น้ำยาเล็ก", price: 0, items: [
+      "ซักพีโอนี","ซักฟอร์เอเวอร์","ซักเลิฟลี่","ซักส้ม",
+      "ปรับเลิฟทัช","ปรับเลิฟลี่","ปรับแฮปปี้ส้ม"
+    ]},
+  ]
+};
+
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+let state = { branch: null, mode: null };
+let screenHistory = ['screen-select'];
+
+// ══════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function goBack() {
+  screenHistory.pop();
+  const prev = screenHistory[screenHistory.length - 1] || 'screen-select';
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(prev).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function goHome() {
+  state = { branch: null, mode: null };
+  document.querySelectorAll('.branch-card, .mode-card').forEach(c => c.classList.remove('selected'));
+  screenHistory = ['screen-select'];
+  showScreen('screen-select');
+}
+
+// ══════════════════════════════════════
+// SELECTION
+// ══════════════════════════════════════
+function selectBranch(branch, el) {
+  state.branch = branch;
+  document.querySelectorAll('.branch-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function selectMode(mode, el) {
+  state.mode = mode;
+  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  const btn = document.getElementById('btn-next');
+  if (mode === 'restock') {
+    btn.className = 'submit-btn restock-btn';
+  } else {
+    btn.className = 'submit-btn stock-btn';
+  }
+}
+
+function goToForm() {
+  if (!state.branch) { alert('กรุณาเลือกสาขา'); return; }
+  if (!state.mode)   { alert('กรุณาเลือกประเภท'); return; }
+
+  if (state.mode === 'stock') {
+    const screenId = state.branch === 'ธานี' ? 'screen-stock-thanee' : 'screen-stock-yak';
+    buildStockForm(state.branch);
+    screenHistory.push(screenId);
+    showScreen(screenId);
+  } else {
+    buildRestockForm(state.branch);
+    screenHistory.push('screen-restock');
+    showScreen('screen-restock');
+  }
+}
+
+// ══════════════════════════════════════
+// BUILD FORMS
+// ══════════════════════════════════════
+function buildStockForm(branch) {
+  const containerId = branch === 'ธานี' ? 'thanee-stock-groups' : 'yak-stock-groups';
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+
+  const groups = PRODUCTS[branch];
+  groups.forEach((grp, gi) => {
+    const div = document.createElement('div');
+    div.className = 'product-group';
+    div.innerHTML = `
+      <div class="group-header">
+        <div class="group-header-dot"></div>
+        <div class="group-title">${grp.group}</div>
+        ${grp.price > 0 ? `<div class="group-price">${grp.price} ฿</div>` : ''}
+      </div>
+    `;
+    grp.items.forEach((item, ii) => {
+      const row = document.createElement('div');
+      row.className = 'product-row';
+      const inputId = `qty-${branch}-${gi}-${ii}`;
+      row.innerHTML = `
+        <div class="product-name">${item}</div>
+        <div class="qty-control">
+          <button class="qty-btn" onclick="changeQty('${inputId}', -1)">−</button>
+          <input class="qty-input" type="number" id="${inputId}" value="0" min="0"
+            oninput="highlightQty(this)" onchange="highlightQty(this)">
+          <button class="qty-btn" onclick="changeQty('${inputId}', 1)">+</button>
+        </div>
+      `;
+      div.appendChild(row);
+    });
+    container.appendChild(div);
+  });
+}
+
+function buildRestockForm(branch) {
+  document.getElementById('restock-header-title').textContent = `🔄 เติมสต็อก — สาขา${branch}`;
+  const container = document.getElementById('restock-groups');
+  container.innerHTML = '';
+
+  const groups = PRODUCTS[branch];
+  groups.forEach((grp, gi) => {
+    const div = document.createElement('div');
+    div.className = 'product-group';
+    div.innerHTML = `
+      <div class="group-header">
+        <div class="group-header-dot" style="background:var(--green)"></div>
+        <div class="group-title">${grp.group}</div>
+        ${grp.price > 0 ? `<div class="group-price">${grp.price} ฿</div>` : ''}
+      </div>
+    `;
+    grp.items.forEach((item, ii) => {
+      const row = document.createElement('div');
+      row.className = 'restock-row';
+      const inputId = `restock-${gi}-${ii}`;
+      row.innerHTML = `
+        <div class="restock-name">${item}</div>
+        <input class="restock-input" type="number" id="${inputId}" placeholder="0" min="0"
+          oninput="highlightRestock(this)">
+      `;
+      div.appendChild(row);
+    });
+    container.appendChild(div);
+  });
+}
+
+// ══════════════════════════════════════
+// QTY HELPERS
+// ══════════════════════════════════════
+function changeQty(id, delta) {
+  const input = document.getElementById(id);
+  const val = Math.max(0, (parseInt(input.value) || 0) + delta);
+  input.value = val;
+  highlightQty(input);
+}
+
+function highlightQty(el) {
+  const val = parseInt(el.value) || 0;
+  el.classList.toggle('has-value', val > 0);
+}
+
+function highlightRestock(el) {
+  const val = parseInt(el.value) || 0;
+  el.classList.toggle('has-value', val > 0);
+}
+
+// ══════════════════════════════════════
+// SUBMIT STOCK
+// ══════════════════════════════════════
+function submitStock(branch) {
+  const shiftEl = document.getElementById(branch === 'ธานี' ? 'thanee-shift' : 'yak-shift');
+  const dateEl  = document.getElementById(branch === 'ธานี' ? 'thanee-date'  : 'yak-date');
+
+  const shift = shiftEl.value;
+  const date  = dateEl.value.trim();
+  if (!date) { alert('กรุณาระบุวันที่'); return; }
+
+  const groups = PRODUCTS[branch];
+  const prefix = branch === 'ธานี' ? '' : '👹จิระ👹\n';
+  let msg = `${date} กะ${shift} สาขา${branch}\n${prefix}\n`;
+  const gi_prefix = branch === 'ธานี' ? 'thanee' : 'yak';
+
+  groups.forEach((grp, gi) => {
+    let groupLines = [];
+    grp.items.forEach((item, ii) => {
+      const inputId = `qty-${gi_prefix}-${gi}-${ii}`;
+      const el = document.getElementById(inputId);
+      const qty = parseInt(el?.value) || 0;
+      groupLines.push(`${item} ${qty}`);
+    });
+    msg += `== ${grp.group} ==\n`;
+    msg += groupLines.join('\n') + '\n\n';
+  });
+
+  msg = msg.trim();
+
+  // แสดง result
+  document.getElementById('result-icon').textContent = '📊';
+  document.getElementById('result-title').textContent = 'รายงานสต็อก';
+  document.getElementById('result-sub').textContent = `สาขา${branch} • กะ${shift} • ${date}`;
+  document.getElementById('result-text').textContent = msg;
+  document.getElementById('copy-btn').textContent = '📋 Copy';
+  document.getElementById('copy-btn').className = 'copy-btn';
+
+  screenHistory.push('screen-result');
+  showScreen('screen-result');
+}
+
+// ══════════════════════════════════════
+// SUBMIT RESTOCK
+// ══════════════════════════════════════
+function submitRestock() {
+  const date   = document.getElementById('restock-date').value.trim();
+  const branch = state.branch;
+  if (!date) { alert('กรุณาระบุวันที่'); return; }
+
+  const groups = PRODUCTS[branch];
+  let msg = `เติมของ สาขา${branch}\n${date}\n\n`;
+  let hasAny = false;
+
+  groups.forEach((grp, gi) => {
+    let groupLines = [];
+    grp.items.forEach((item, ii) => {
+      const inputId = `restock-${gi}-${ii}`;
+      const el = document.getElementById(inputId);
+      const qty = parseInt(el?.value) || 0;
+      if (qty > 0) {
+        groupLines.push(`${item} ${qty}`);
+        hasAny = true;
+      }
+    });
+    if (groupLines.length > 0) {
+      msg += `== ${grp.group} ==\n`;
+      msg += groupLines.join('\n') + '\n\n';
+    }
+  });
+
+  if (!hasAny) { alert('กรุณากรอกจำนวนสินค้าที่เติมอย่างน้อย 1 รายการ'); return; }
+
+  msg = msg.trim();
+
+  document.getElementById('result-icon').textContent = '🔄';
+  document.getElementById('result-title').textContent = 'รายงานเติมสต็อก';
+  document.getElementById('result-sub').textContent = `สาขา${branch} • ${date}`;
+  document.getElementById('result-text').textContent = msg;
+  document.getElementById('copy-btn').textContent = '📋 Copy';
+  document.getElementById('copy-btn').className = 'copy-btn';
+
+  screenHistory.push('screen-result');
+  showScreen('screen-result');
+}
+
+// ══════════════════════════════════════
+// COPY
+// ══════════════════════════════════════
+function copyResult() {
+  const text = document.getElementById('result-text').textContent;
+  const btn  = document.getElementById('copy-btn');
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '✅ Copied!';
+      btn.className = 'copy-btn copied';
+      setTimeout(() => {
+        btn.textContent = '📋 Copy';
+        btn.className = 'copy-btn';
+      }, 2000);
+    });
+  } else {
+    // fallback สำหรับ iOS
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    btn.textContent = '✅ Copied!';
+    btn.className = 'copy-btn copied';
+    setTimeout(() => {
+      btn.textContent = '📋 Copy';
+      btn.className = 'copy-btn';
+    }, 2000);
+  }
+}
+
+// ══════════════════════════════════════
+// INIT DATE
+// ══════════════════════════════════════
+function initDate() {
+  const now = new Date();
+  const d = now.getDate();
+  const m = now.getMonth() + 1;
+  const y = (now.getFullYear() + 543) % 100;
+  const dateStr = `${d}/${m}/${y}`;
+  ['thanee-date','yak-date','restock-date'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.placeholder = dateStr;
+    if (el && !el.value) el.value = dateStr;
+  });
+}
+
+initDate();
+</script>
+</body>
+</html>
